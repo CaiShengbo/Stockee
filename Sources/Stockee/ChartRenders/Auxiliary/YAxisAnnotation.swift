@@ -31,32 +31,26 @@ public class YAxisAnnotation<Input: Quote>: ChartRenderer {
     public typealias Input = Input
     public typealias QuoteProcessor = NopeQuoteProcessor<Input>
     private var formatter: NumberFormatting?
-    ///  当前在屏幕上渲染的 Labels
-    private var visibleLabels: [UILabel] = []
+    ///  当前在屏幕上渲染的 Layers
+    private var visibleLayers: [InsetsTextLayer] = []
     /// 重用队列
-    private var reusableLabels: [UILabel] = []
-    /// zPosition
-    private var zPosition: CGFloat = 0 {
-        didSet {
-            visibleLabels.forEach { $0.layer.zPosition = zPosition }
-        }
-    }
-
-    private var maxWidth: CGFloat
-
+    private var reusableLayers: [InsetsTextLayer] = []
+    
+    private let edgePadding: CGFloat
     /// 创建 Y 轴标注
     /// - Parameters:
     ///   - formatter: Formatter
-    ///   - maxWidth: 最大宽度，默认 80
+    ///   - edgePadding: 距离边框的间距
     public init(formatter: NumberFormatting? = nil,
-                maxWidth: CGFloat = 80)
+                edgePadding: CGFloat = 5)
     {
+        self.edgePadding = edgePadding
         self.formatter = formatter
-        self.maxWidth = maxWidth
     }
 
     public func updateZPosition(_ position: CGFloat) {
-        zPosition = position
+        visibleLayers.forEach { $0.zPosition = position }
+        reusableLayers.forEach { $0.zPosition = position }
     }
 
     public func setup(in _: ChartView<Input>) {}
@@ -73,23 +67,22 @@ public class YAxisAnnotation<Input: Quote>: ChartRenderer {
         let count = context.layout.verticalGridCount(heigt: height)
         let interval = height / CGFloat(count)
         let ys = (0 ... count).map { minY + interval * CGFloat($0) }
-        setupLabels(count: ys.count, configuration: context.configuration, in: view)
+        setupLayers(count: ys.count, configuration: context.configuration, in: view)
         let formatter = formatter ?? context.preferredFormatter
-        zip(visibleLabels, ys).forEach { label, y in
-            label.text = formatter.format(low + (baseY - y) * unit)
-            label.sizeToFit()
-            label.frame.size.width = min(maxWidth, label.frame.width)
-            label.frame.origin.y = y
-            label.frame.origin.x = maxX - label.frame.width
+        zip(visibleLayers, ys).forEach { layer, y in
+            layer.text = formatter.format(low + (baseY - y) * unit)
+            layer.sizeToFit()
+            layer.frame.origin.y = y
+            layer.frame.origin.x = maxX - layer.frame.width
         }
-        if let last = visibleLabels.last {
+        if let last = visibleLayers.last {
             last.frame.origin.y = min(last.frame.minY,
                                       context.groupContentRect.maxY - last.frame.height)
         }
     }
 
     public func tearDown(in _: ChartView<Input>) {
-        visibleLabels.forEach { $0.removeFromSuperview() }
+        visibleLayers.forEach { $0.removeFromSuperlayer() }
     }
 
     public func extremePoint(contextValues _: ContextValues, visibleRange _: Range<Int>) -> (min: CGFloat, max: CGFloat)? {
@@ -100,41 +93,40 @@ public class YAxisAnnotation<Input: Quote>: ChartRenderer {
 // MARK: - Reuse Caption
 
 extension YAxisAnnotation {
-    private func setupLabels(count: Int, configuration: Configuration, in view: UIView) {
-        if visibleLabels.count > count {
-            for _ in count ..< visibleLabels.count {
-                enqueueReusableLabel(visibleLabels.removeLast())
+    private func setupLayers(count: Int, configuration: Configuration, in view: UIView) {
+        if visibleLayers.count > count {
+            for i in count ..< visibleLayers.count {
+                let layer = visibleLayers[i]
+                enqueueReusableLayer(layer)
             }
         } else {
-            for _ in visibleLabels.count ..< count {
-                dequeueReusableLabel(configuration: configuration, in: view)
+            for _ in visibleLayers.count ..< count {
+                dequeueReusableLayer(configuration: configuration, in: view)
             }
         }
     }
 
     /// 把 View 放入重用队列
-    private func enqueueReusableLabel(_ view: UILabel) {
-        view.removeFromSuperview()
-        reusableLabels.append(view)
+    private func enqueueReusableLayer(_ layer: InsetsTextLayer) {
+        visibleLayers.removeAll(where: { $0 == layer })
+        layer.removeFromSuperlayer()
+        reusableLayers.append(layer)
     }
 
     /// 从队列中重用或者创建一个新的
     @discardableResult
-    private func dequeueReusableLabel(configuration: Configuration, in view: UIView) -> UILabel {
-        let label: UILabel
-        if reusableLabels.count > 0 {
-            label = reusableLabels.removeLast()
+    private func dequeueReusableLayer(configuration: Configuration, in view: UIView) -> InsetsTextLayer {
+        let layer: InsetsTextLayer
+        if reusableLayers.count > 0 {
+            layer = reusableLayers.removeLast()
         } else {
-            label = .init()
+            layer = InsetsTextLayer(insets: UIEdgeInsets(top: 0, left: 0, bottom: 0, right: edgePadding))
         }
-        label.textColor = configuration.style.captionColor
-        label.font = configuration.captionFont
-        label.textAlignment = .center
-        label.lineBreakMode = .byTruncatingMiddle
-        label.numberOfLines = 1
-        label.layer.zPosition = zPosition
-        visibleLabels.append(label)
-        view.addSubview(label)
-        return label
+        layer.textColor = configuration.style.captionColor
+        layer.font = configuration.captionFont
+        layer.alignmentMode = .center
+        visibleLayers.append(layer)
+        view.layer.addSublayer(layer)
+        return layer
     }
 }

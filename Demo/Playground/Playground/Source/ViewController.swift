@@ -28,6 +28,10 @@ import Stockee
 import UIKit
 
 public struct Candle: Quote, Codable {
+    public var bid: CGFloat?
+    
+    public var sell: CGFloat?
+    
     public var date: Date
     public var start: Int = 0
     public var end: Int = 0
@@ -152,15 +156,19 @@ class ViewController: UIViewController {
 extension ViewController {
     private var mainChartGroup: ChartGroup<Candle> {
         // 主图，高度为 200， 然后配置默认的 Formatter，用于格式化各种指标
-        ChartGroup(height: 200, preferredFormatter: .defaultPrice(), chartPadding: (2, 4)) {
+        ChartGroup(height: 300, preferredFormatter: .defaultPrice(), chartPadding: (2, 4)) {
             // 绘制网格
             GridIndicator(lineWidth: 1 / UIScreen.main.scale, color: .Stockee.border)
+            // 水印
+            if let image = UIImage(named: "logo") {
+                WatermarkRenderer(image: image, position: .leftBottom(left: 15, bottom: 10))
+            }
             // 绘制 Y 轴坐标
             YAxisAnnotation()
 
             if isTimeShare {
                 // 如果为分时图，则绘制分时图
-                TimeShareChart(color: .magenta)
+                TimeShareChart(color: .red, indicatorShadowColor: .orange)
             } else {
                 // 绘制蜡烛图
                 CandlestickChart()
@@ -192,11 +200,18 @@ extension ViewController {
                 }
                 // 绘制最高最低价格指示器
                 ExtremePriceIndicator(color: .label)
+                
+                // B&S指示器
+                if let bidImage = UIImage(named: "kline_bid_indicator"),
+                   let sellImage = UIImage(named: "kline_sell_indicator") {
+                    BidSellIndicator(bidImage: bidImage, sellImage: sellImage)
+                }
+                
                 // 绘制最新成交价
-                LatestPriceIndicator()
+                LatestPriceIndicator(borderColor: .hex(0x14171E), textColor: .hex(0x14171E), boxBgColor: .white, indicatorLineColor: .hex(0x14171E))
             }
             // 绘制 Y 轴选择的指标值
-            SelectedYIndicator()
+            SelectedYIndicator(edgeSpace: 8, insets: UIEdgeInsets(top: 2, left: 5, bottom: 2, right: 5), cornerRadius: 2, bgColor: .hex(0x14171E), textColor: .white)
         }
     }
 
@@ -209,7 +224,7 @@ extension ViewController {
                 // 绘制日期
                 TimeAnnotation(dateFormat: "HH:mm")
                 // 绘制当前选择的日期
-                SelectedTimeIndicator()
+                SelectedTimeIndicator(backgroundColor: .hex(0x14171E), dateFormat: "HH:mm")
             }
 
             if chartOptions.contains(.vol) {
@@ -220,7 +235,7 @@ extension ViewController {
                     // 同时也要绘制 Y 轴坐标
                     YAxisAnnotation(formatter: .volume)
                     VolumeChart(minHeight: 1)
-                    SelectedYIndicator()
+                    SelectedYIndicator(edgeSpace: 8, insets: UIEdgeInsets(top: 2, left: 5, bottom: 2, right: 5), cornerRadius: 2, bgColor: .hex(0x14171E), textColor: .white)
                 }
             }
 
@@ -230,7 +245,7 @@ extension ViewController {
                     GridIndicator(lineWidth: 1 / UIScreen.main.scale, color: .Stockee.border)
                     YAxisAnnotation(formatter: .maximumSignificantDigits(4))
                     MACDChart(configuration: .init(diffColor: .Stockee.indicator1, deaColor: .Stockee.indicator2))
-                    SelectedYIndicator()
+                    SelectedYIndicator(edgeSpace: 8, insets: UIEdgeInsets(top: 2, left: 5, bottom: 2, right: 5), cornerRadius: 2, bgColor: .hex(0x14171E), textColor: .white)
                 }
             }
 
@@ -242,7 +257,7 @@ extension ViewController {
                     KDJChart(configuration: .init(kColor: .Stockee.indicator1,
                                                   dColor: .Stockee.indicator2,
                                                   jColor: .Stockee.indicator3))
-                    SelectedYIndicator()
+                    SelectedYIndicator(edgeSpace: 8, insets: UIEdgeInsets(top: 2, left: 5, bottom: 2, right: 5), cornerRadius: 2, bgColor: .hex(0x14171E), textColor: .white)
                 }
             }
 
@@ -254,7 +269,7 @@ extension ViewController {
                     RSIChart(configuration: .init(period: 6, color: .Stockee.indicator1))
                     RSIChart(configuration: .init(period: 12, color: .Stockee.indicator2))
                     RSIChart(configuration: .init(period: 24, color: .Stockee.indicator3))
-                    SelectedYIndicator()
+                    SelectedYIndicator(edgeSpace: 8, insets: UIEdgeInsets(top: 2, left: 5, bottom: 2, right: 5), cornerRadius: 2, bgColor: .hex(0x14171E), textColor: .white)
                 }
             }
         }

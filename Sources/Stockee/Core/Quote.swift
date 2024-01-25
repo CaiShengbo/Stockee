@@ -41,4 +41,8 @@ public protocol Quote {
     var close: CGFloat { get }
     /// 交易量
     var volume: CGFloat { get }
+    /// 购入
+    var bid: CGFloat? { get }
+    /// 卖出
+    var sell: CGFloat? { get }
 }

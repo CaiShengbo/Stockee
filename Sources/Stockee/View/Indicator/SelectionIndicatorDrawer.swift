@@ -47,6 +47,7 @@ class SelectionIndicatorDrawer<Input: Quote> {
     init() {
         lineLayer.fillColor = UIColor.clear.cgColor
         lineLayer.lineWidth = 1 / UIScreen.main.scale
+        lineLayer.lineDashPattern = [2, 2]
         pointLayer.lineWidth = 4
     }
 

@@ -26,18 +26,20 @@
 
 import Foundation
 
-public final class Delegate<Input, Output> {
-    private var block: ((Input) -> Output?)?
-    public init() {}
+extension ChartView {
+    public final class Delegate<In, Out> {
+        private var block: ((In) -> Out?)?
+        public init() {}
 
-    public func delegate<Target: AnyObject>(on target: Target, action: @escaping (Target, Input) -> Output) {
-        block = { [weak target] in
-            guard let target = target else { return nil }
-            return action(target, $0)
+        public func delegate<Target: AnyObject>(on target: Target, action: @escaping (Target, In) -> Out) {
+            block = { [weak target] in
+                guard let target = target else { return nil }
+                return action(target, $0)
+            }
         }
-    }
 
-    public func callAsFunction(_ input: Input) -> Output? {
-        block?(input)
+        public func callAsFunction(_ input: In) -> Out? {
+            block?(input)
+        }
     }
 }

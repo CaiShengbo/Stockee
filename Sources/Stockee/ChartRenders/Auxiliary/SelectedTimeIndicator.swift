@@ -33,69 +33,74 @@ public class SelectedTimeIndicator<Input: Quote>: ChartRenderer {
     /// 背景颜色
     public var backgroundColor: UIColor {
         didSet {
-            label.backgroundColor = backgroundColor
+            textLayer.backgroundColor = backgroundColor.cgColor
         }
     }
 
     /// 文字颜色
     public var textColor: UIColor {
         didSet {
-            label.textColor = textColor
+            textLayer.textColor = textColor
         }
     }
 
     /// 日期格式，默认为：yyyy-MM-dd HH:mm
-    public var formatter: DateFormatter = {
+    private var formatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm"
         return formatter
     }()
-
-    /// 水平 Padding，｜PaddingH｜Text｜PaddingH｜
-    public var paddingH: CGFloat = 2
-
-    private let label = UILabel()
-
-    public init(backgroundColor: UIColor = .black, textColor: UIColor = .white) {
+    
+    private let textLayer: InsetsTextLayer
+    
+    public init(
+        backgroundColor: UIColor = .black,
+        textColor: UIColor = .white,
+        textBoxInsets: UIEdgeInsets = UIEdgeInsets(top: 2, left: 3, bottom: 2, right: 3),
+        dateFormat: String
+    ) {
         self.backgroundColor = backgroundColor
         self.textColor = textColor
-        label.textAlignment = .center
-        label.backgroundColor = backgroundColor
-        label.textColor = textColor
-        label.isHidden = true
+        self.formatter.dateFormat = dateFormat
+        textLayer = InsetsTextLayer(insets: textBoxInsets)
+        textLayer.alignmentMode = .center
+        textLayer.backgroundColor = backgroundColor.cgColor
+        textLayer.textColor = textColor
+        textLayer.isHidden = true
+        textLayer.contentsScale = UIScreen.main.scale
+        textLayer.allowsEdgeAntialiasing = true
+        textLayer.cornerRadius = 2
     }
 
     public func updateZPosition(_ position: CGFloat) {
-        label.layer.zPosition = .greatestFiniteMagnitude
+        textLayer.zPosition = .greatestFiniteMagnitude
     }
 
     public func setup(in view: ChartView<Input>) {
-        view.addSubview(label)
+        view.layer.addSublayer(textLayer)
     }
 
     public func render(in view: ChartView<Input>, context: Context) {
-        defer { label.isHidden = context.selectedIndex == nil }
+        defer { textLayer.isHidden = context.selectedIndex == nil }
         guard let selectedIndex = context.selectedIndex else {
             return
         }
-        label.font = context.configuration.captionFont
+        textLayer.font = context.configuration.captionFont
         let midX = context.layout.quoteMidX(at: selectedIndex)
         let date = context.data[selectedIndex].date
-        label.text = formatter.string(from: date)
-        label.sizeToFit()
-        var frame = label.frame
-        let width = frame.width + paddingH * 2
+        textLayer.text = formatter.string(from: date)
+        textLayer.sizeToFit()
+        var layerFrame = textLayer.frame
         let minX = view.contentOffset.x
-        let maxX = minX + view.frame.width - width
-        let x = min(maxX, max(minX, midX - width / 2))
-        frame.origin = .init(x: x, y: context.contentRect.minY)
-        frame.size.width = width
-        frame.size.height = context.contentRect.height
-        label.frame = frame
+        let maxX = minX + view.frame.width - layerFrame.width
+        let x = min(maxX, max(minX, midX - layerFrame.width / 2))
+        let y = (context.contentRect.maxY - context.contentRect.minY - layerFrame.height) / 2 + context.contentRect.minY
+        layerFrame.origin = .init(x: x, y: y)
+        textLayer.frame = layerFrame
     }
 
     public func tearDown(in view: ChartView<Input>) {
-        label.removeFromSuperview()
+        textLayer.removeFromSuperlayer()
     }
 
     public func extremePoint(contextValues: ContextValues, visibleRange: Range<Int>) -> (min: CGFloat, max: CGFloat)? {

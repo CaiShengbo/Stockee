@@ -41,6 +41,10 @@ final class TimeShareLayer: CALayer {
     private var gradientLayer: _GradientLayer = .init()
     private var maskLayer: ShapeLayer = .init()
     private var lineLayer: ShapeLayer = .init()
+    private var indicatorLayer: ShapeLayer = .init()
+    private var indicatorShadowLayer: ShapeLayer = .init()
+    
+    private let indicatorWidth: CGFloat = 6
 
     override public init() {
         super.init()
@@ -52,18 +56,23 @@ final class TimeShareLayer: CALayer {
         configureHierarchy()
     }
 
-    func update(color: UIColor) {
+    func update(color: UIColor, indicatorShadowColor: UIColor) {
         gradientLayer.colors = [
-            color.withAlphaComponent(0.5).cgColor,
+            color.withAlphaComponent(0.3).cgColor,
             color.withAlphaComponent(0.01).cgColor
         ]
         lineLayer.strokeColor = color.cgColor
+        indicatorLayer.backgroundColor = color.cgColor
+        indicatorShadowLayer.shadowColor = indicatorShadowColor.cgColor
     }
 
     // MARK: - Public
 
     func update<Q: Quote>(with context: RendererContext<Q>) {
-        guard !context.visibleRange.isEmpty else { return }
+        guard !context.visibleRange.isEmpty else { 
+            indicatorShadowLayer.isHidden = true
+            return
+        }
         let start = max(0, context.visibleRange.startIndex - 1)
         let end = min(context.data.count, context.visibleRange.endIndex + 1)
         let minX = context.layout.quoteMidX(at: start)
@@ -92,6 +101,15 @@ final class TimeShareLayer: CALayer {
         path.addLine(to: CGPoint(x: 0, y: frame.height))
         path.addLine(to: CGPoint(x: 0, y: 0))
         maskLayer.path = path
+        
+        if context.visibleRange.contains(context.data.count - 1) {
+            indicatorShadowLayer.isHidden = false
+            let lastPointX = context.layout.quoteMidX(at: context.data.count - 1) - minX - indicatorWidth / 2
+            let lastPointY = context.yOffset(for: context.data.last!.close) - minY - indicatorWidth / 2
+            indicatorShadowLayer.frame = CGRectMake(lastPointX, lastPointY, indicatorWidth, indicatorWidth)
+        } else {
+            indicatorShadowLayer.isHidden = true
+        }
     }
 
     // MARK: Override
@@ -114,5 +132,18 @@ final class TimeShareLayer: CALayer {
         gradientLayer.startPoint = .init(x: 0.5, y: 0)
         gradientLayer.endPoint = .init(x: 0.5, y: 1)
         gradientLayer.mask = maskLayer
+        
+        
+        addSublayer(indicatorShadowLayer)
+        indicatorShadowLayer.masksToBounds = false
+        indicatorShadowLayer.shadowRadius = 8
+        indicatorShadowLayer.shadowOffset = CGSize(width: 0, height: 1)
+        indicatorShadowLayer.shadowOpacity = 1
+        
+        indicatorShadowLayer.addSublayer(indicatorLayer)
+        indicatorLayer.backgroundColor = UIColor.clear.cgColor
+        indicatorLayer.masksToBounds = true
+        indicatorLayer.cornerRadius = indicatorWidth/2
+        indicatorLayer.frame = CGRect(x: 0, y: 0, width: indicatorWidth, height: indicatorWidth)
     }
 }

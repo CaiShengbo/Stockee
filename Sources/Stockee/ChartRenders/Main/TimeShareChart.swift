@@ -36,13 +36,20 @@ public final class TimeShareChart<Input: Quote>: ChartRenderer {
             updateGradientColor()
         }
     }
+    
+    public var indicatorShadowColor: UIColor {
+        didSet {
+            updateGradientColor()
+        }
+    }
 
     private var timeShareLayer: TimeShareLayer = .init()
 
     /// 创建蜡烛图图表
     /// - Parameter color: 颜色
-    public init(color: UIColor) {
+    public init(color: UIColor, indicatorShadowColor: UIColor) {
         self.color = color
+        self.indicatorShadowColor = indicatorShadowColor
         updateGradientColor()
     }
 
@@ -76,19 +83,6 @@ public final class TimeShareChart<Input: Quote>: ChartRenderer {
     // MARK: - Private Methods
 
     private func updateGradientColor() {
-        timeShareLayer.update(color: color)
-    }
-
-    public func captions(quoteIndex: Int, context: Context) -> [NSAttributedString] {
-        let quote = context.data[quoteIndex]
-        let text = context.preferredFormatter.format(quote.close)
-        let color = quote.close > quote.open ? context.configuration.upColor : context.configuration.downColor
-        return [
-            .init(string: "Price:\(text)",
-                  attributes: [
-                      .font: context.configuration.captionFont,
-                      .foregroundColor: color
-                  ])
-        ]
+        timeShareLayer.update(color: color, indicatorShadowColor: indicatorShadowColor)
     }
 }

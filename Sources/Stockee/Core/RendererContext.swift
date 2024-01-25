@@ -70,6 +70,9 @@ extension RendererContext {
         let height = contentRect.height
         let minY = contentRect.minY
         let peak = extremePoint.max - extremePoint.min
+        guard peak != 0 else {
+            return height
+        }
         return height - height * (value - extremePoint.min) / peak + minY
     }
 

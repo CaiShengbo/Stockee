@@ -2,6 +2,10 @@ import Stockee
 import UIKit
 
 public struct SocketQuote: Quote {
+    public var bid: CGFloat?
+    
+    public var sell: CGFloat?
+    
     public var date: Date
     public var start: Int
     public var end: Int
@@ -54,6 +58,10 @@ public struct BNWrapper: Decodable {
 }
 
 public struct BNQuote: Quote {
+    public var bid: CGFloat?
+    
+    public var sell: CGFloat?
+    
     public var date: Date
     public var start: Int
     public var end: Int

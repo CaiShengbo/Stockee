@@ -118,6 +118,23 @@ private extension CandlestickChart {
                             context: context)
         path.addRect(lineRect)
     }
+    
+    private func writeBid(into path: CGMutablePath,
+                              data: [Input],
+                              context: RendererContext<Input>,
+                              index: Int) {
+        let barWidth = context.configuration.barWidth
+        let spacing = context.configuration.spacing
+        let quote = data[index]
+        let barX = (barWidth + spacing) * CGFloat(index)
+        
+        let y1 = yOffset(for: quote.low, context: context)
+        let height: CGFloat = 8
+        let width: CGFloat = 8
+        let barRect = CGRect(x: barX, y: y1, width: width, height: height)
+        path.addRect(barRect)
+    }
+    
 
     private func rect(for pricePair: (CGFloat, CGFloat), x: CGFloat, width: CGFloat, context: Context) -> CGRect {
         let y1 = yOffset(for: pricePair.0, context: context)

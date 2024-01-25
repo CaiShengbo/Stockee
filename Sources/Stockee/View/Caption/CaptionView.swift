@@ -60,7 +60,7 @@ final class CaptionView: UIView {
         }
     }
 
-    var width: CGFloat = 0
+//    var width: CGFloat = 0
     private var isDirty: Bool = false
     var attributedTexts: [NSAttributedString] = [] {
         didSet {
@@ -82,9 +82,9 @@ final class CaptionView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        let width = _pixelCeil(frame.width)
+//        let width = _pixelCeil(frame.width)
         defer {
-            self.width = width
+//            self.width = width
             self.isDirty = false
         }
         if isDirty {

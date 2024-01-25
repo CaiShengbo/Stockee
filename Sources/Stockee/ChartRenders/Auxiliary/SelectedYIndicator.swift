@@ -30,37 +30,41 @@ import UIKit
 public class SelectedYIndicator<Input: Quote>: ChartRenderer {
     public typealias Input = Input
     public typealias QuoteProcessor = NopeQuoteProcessor<Input>
-    private var label: IndicatorLabel = .init()
-    private var height: CGFloat
-    private var minWidth: CGFloat
-    private var maxWidth: CGFloat
-
+    
+    private let priceLayer: InsetsTextLayer
+    
+    private let edgeSpace: CGFloat
+    
     /// 正在选择的 Y 轴的指示器
     /// - Parameters:
-    ///   - height: 高度
-    ///   - minWidth: 最小宽度
-    ///   - maxWidth: 最大宽度
-    ///   - background: 背景颜色
-    ///   - textColor: 文字颜色
-    public init(height: CGFloat = 12,
-                minWidth: CGFloat = 36,
-                maxWidth: CGFloat = 80,
-                background: UIColor = .red,
-                textColor: UIColor = .white)
-    {
-        self.height = height
-        self.minWidth = minWidth
-        self.maxWidth = maxWidth
-        label.shapeLayer.fillColor = background.cgColor
-        label.label.textColor = textColor
+    ///   - edgeSpace: 指示器距离边缘的距离
+    ///   - insets: 价格文本内间距
+    ///   - cornerRadius: 价格文本框圆角
+    ///   - bgColor: 价格文本框背景色
+    ///   - textColor: 价格文本颜色
+    public init(
+        edgeSpace: CGFloat,
+        insets: UIEdgeInsets,
+        cornerRadius: CGFloat,
+        bgColor: UIColor,
+        textColor: UIColor
+    ) {
+        self.edgeSpace = edgeSpace
+        priceLayer = InsetsTextLayer(insets: insets)
+        priceLayer.masksToBounds = true
+        priceLayer.contentsScale = UIScreen.main.scale
+        priceLayer.alignmentMode = .center
+        priceLayer.cornerRadius = cornerRadius
+        priceLayer.backgroundColor = bgColor.cgColor
+        priceLayer.textColor = textColor
     }
 
     public func updateZPosition(_ position: CGFloat) {
-        label.layer.zPosition = .greatestFiniteMagnitude
+        priceLayer.zPosition = .greatestFiniteMagnitude
     }
 
     public func setup(in view: ChartView<Input>) {
-        view.addSubview(label)
+        view.layer.addSublayer(priceLayer)
     }
 
     public func render(in view: ChartView<Input>, context: Context) {
@@ -70,33 +74,29 @@ public class SelectedYIndicator<Input: Quote>: ChartRenderer {
               let position = context.indicatorPosition,
               position.y >= minY, position.y <= maxY
         else {
-            label.isHidden = true
+            priceLayer.isHidden = true
             return
         }
         let y = position.y
-        label.isHidden = false
-        label.label.font = context.configuration.captionFont
+        priceLayer.isHidden = false
+        priceLayer.font = context.configuration.captionFont
         let minX = view.contentOffset.x
         let maxX = minX + view.frame.width
         let midX = (minX + maxX) / 2
         let value = context.value(forY: y)
-        label.label.text = context.preferredFormatter.format(value)
-        var size = label.sizeThatFits(.init(width: maxWidth, height: height))
-        size.height = height
-        size.width = min(maxWidth, max(size.width, minWidth))
+        let priceStr = context.preferredFormatter.format(value)
+        priceLayer.text = priceStr
+        
+        let priceLayerSize = priceLayer.sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude))
         if position.x > midX {
-            label.triangleDirection = .left
-            label.frame = CGRect(origin: CGPoint(x: maxX - size.width, y: y - size.height / 2),
-                                 size: size)
+            priceLayer.frame = CGRect(x: maxX - edgeSpace - priceLayerSize.width, y: y - priceLayerSize.height / 2, width: priceLayerSize.width, height: priceLayerSize.height)
         } else {
-            label.triangleDirection = .right
-            label.frame = CGRect(origin: CGPoint(x: minX, y: y - size.height / 2),
-                                 size: size)
+            priceLayer.frame = CGRect(x: minX + edgeSpace, y: y - priceLayerSize.height / 2, width: priceLayerSize.width, height: priceLayerSize.height)
         }
     }
 
     public func tearDown(in view: ChartView<Input>) {
-        label.removeFromSuperview()
+        priceLayer.removeFromSuperlayer()
     }
 
     public func extremePoint(contextValues: ContextValues, visibleRange: Range<Int>) -> (min: CGFloat, max: CGFloat)? {
