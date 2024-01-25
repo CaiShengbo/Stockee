@@ -31,6 +31,11 @@ final class GridLayer: ShapeLayer {
         super.init()
         setup()
     }
+    
+    public override init(layer: Any) {
+        super.init()
+        setup()
+    }
 
     public required init?(coder: NSCoder) {
         super.init(coder: coder)

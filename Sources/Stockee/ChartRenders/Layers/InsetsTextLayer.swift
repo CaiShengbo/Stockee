@@ -68,6 +68,18 @@ public class InsetsTextLayer: ShapeLayer {
         textLayer.allowsEdgeAntialiasing = true
     }
     
+    public override init(layer: Any) {
+        guard let layer = layer as? InsetsTextLayer else {
+            fatalError("init(layer:) layer class: \(layer)")
+        }
+        self.insets = layer.insets
+        super.init()
+        addSublayer(textLayer)
+        contentsScale = UIScreen.main.scale
+        allowsEdgeAntialiasing = true
+        textLayer.allowsEdgeAntialiasing = true
+    }
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
