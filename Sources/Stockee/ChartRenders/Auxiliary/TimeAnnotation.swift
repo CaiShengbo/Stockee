@@ -31,11 +31,11 @@ public class TimeAnnotation<Input: Quote>: ChartRenderer {
     public typealias Input = Input
     public typealias QuoteProcessor = NopeQuoteProcessor<Input>
     private var formatter: DateFormatter
-    private var visibleLabels: [UILabel] = []
-    private var reusableLabels: [UILabel] = []
+    private var visibleLayers: [InsetsTextLayer] = []
+    private var reusableLayers: [InsetsTextLayer] = []
     private var zPosition: CGFloat = 0 {
         didSet {
-            visibleLabels.forEach { $0.layer.zPosition = zPosition }
+            visibleLayers.forEach { $0.zPosition = zPosition }
         }
     }
 
@@ -62,24 +62,18 @@ public class TimeAnnotation<Input: Quote>: ChartRenderer {
             if x < 0, context.data.count > 0 { return 0 }
             return context.layout.quoteIndex(at: .init(x: x, y: 0))
         }
-        setupLabels(count: indices.count, configuration: context.configuration, in: view)
+        setupLayers(count: indices.count, configuration: context.configuration, in: view)
         let midY = context.contentRect.midY
-        zip(visibleLabels, indices).forEach { label, index in
-            label.text = formatter.string(from: context.data[index].date)
-            label.sizeToFit()
-            if index == indices.first {
-                label.center = .init(x: x + label.frame.width / 2, y: midY)
-            } else if index == indices.last {
-                label.center = .init(x: x - label.frame.width / 2, y: midY)
-            } else {
-                label.center = .init(x: x, y: midY)
-            }
+        zip(visibleLayers, indices).forEach { (layer, index) in
+            layer.text = formatter.string(from: context.data[index].date)
+            layer.sizeToFit()
+            layer.frame = CGRect(x: x - layer.bounds.width/2, y: midY - layer.bounds.height/2, width: layer.bounds.width, height: layer.bounds.height)
             x += interval
         }
     }
 
     public func tearDown(in view: ChartView<Input>) {
-        visibleLabels.forEach { $0.removeFromSuperview() }
+        visibleLayers.forEach { $0.removeFromSuperlayer() }
     }
 
     public func extremePoint(contextValues: ContextValues, visibleRange: Range<Int>) -> (min: CGFloat, max: CGFloat)? {
@@ -90,39 +84,41 @@ public class TimeAnnotation<Input: Quote>: ChartRenderer {
 // MARK: - Reuse Caption
 
 extension TimeAnnotation {
-    private func setupLabels(count: Int, configuration: Configuration, in view: UIView) {
-        if visibleLabels.count > count {
-            for _ in count..<visibleLabels.count {
-                enqueueReusableLabel(visibleLabels.removeLast())
+    private func setupLayers(count: Int, configuration: Configuration, in view: UIView) {
+        if visibleLayers.count > count {
+            for i in count..<visibleLayers.count {
+                let layer = visibleLayers[i]
+                enqueueReusableLayer(layer)
             }
         } else {
-            for _ in visibleLabels.count..<count {
-                dequeueReusableLabel(configuration: configuration, in: view)
+            for _ in visibleLayers.count..<count {
+                dequeueReusableLayer(configuration: configuration, in: view)
             }
         }
     }
 
     /// 把 View 放入重用队列
-    private func enqueueReusableLabel(_ view: UILabel) {
-        view.removeFromSuperview()
-        reusableLabels.append(view)
+    private func enqueueReusableLayer(_ layer: InsetsTextLayer) {
+        visibleLayers.removeAll(where: { $0 == layer })
+        layer.removeFromSuperlayer()
+        reusableLayers.append(layer)
     }
 
     /// 从队列中重用或者创建一个新的
     @discardableResult
-    private func dequeueReusableLabel(configuration: Configuration, in view: UIView) -> UILabel {
-        let label: UILabel
-        if reusableLabels.count > 0 {
-            label = reusableLabels.removeLast()
+    private func dequeueReusableLayer(configuration: Configuration, in view: UIView) -> InsetsTextLayer {
+        let layer: InsetsTextLayer
+        if reusableLayers.count > 0 {
+            layer = reusableLayers.removeLast()
         } else {
-            label = .init()
+            layer = InsetsTextLayer(insets: .zero)
         }
-        label.textColor = configuration.style.captionColor
-        label.font = configuration.captionFont
-        label.textAlignment = .center
-        label.layer.zPosition = zPosition
-        visibleLabels.append(label)
-        view.addSubview(label)
-        return label
+        layer.textColor = configuration.style.captionColor
+        layer.font = configuration.captionFont
+        layer.alignmentMode = .center
+        layer.zPosition = zPosition
+        visibleLayers.append(layer)
+        view.layer.addSublayer(layer)
+        return layer
     }
 }

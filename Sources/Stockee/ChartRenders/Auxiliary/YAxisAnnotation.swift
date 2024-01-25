@@ -35,6 +35,11 @@ public class YAxisAnnotation<Input: Quote>: ChartRenderer {
     private var visibleLayers: [InsetsTextLayer] = []
     /// 重用队列
     private var reusableLayers: [InsetsTextLayer] = []
+    private var zPosition: CGFloat = 0 {
+        didSet {
+            visibleLayers.forEach { $0.zPosition = zPosition }
+        }
+    }
     
     private let edgePadding: CGFloat
     /// 创建 Y 轴标注
@@ -49,8 +54,7 @@ public class YAxisAnnotation<Input: Quote>: ChartRenderer {
     }
 
     public func updateZPosition(_ position: CGFloat) {
-        visibleLayers.forEach { $0.zPosition = position }
-        reusableLayers.forEach { $0.zPosition = position }
+        zPosition = position
     }
 
     public func setup(in _: ChartView<Input>) {}
@@ -125,6 +129,7 @@ extension YAxisAnnotation {
         layer.textColor = configuration.style.captionColor
         layer.font = configuration.captionFont
         layer.alignmentMode = .center
+        layer.zPosition = zPosition
         visibleLayers.append(layer)
         view.layer.addSublayer(layer)
         return layer
