@@ -86,9 +86,10 @@ public class TimeAnnotation<Input: Quote>: ChartRenderer {
 extension TimeAnnotation {
     private func setupLayers(count: Int, configuration: Configuration, in view: UIView) {
         if visibleLayers.count > count {
-            for i in count..<visibleLayers.count {
-                let layer = visibleLayers[i]
-                enqueueReusableLayer(layer)
+            for _ in count..<visibleLayers.count {
+                if let layer = visibleLayers.last {
+                    enqueueReusableLayer(layer)
+                }
             }
         } else {
             for _ in visibleLayers.count..<count {
