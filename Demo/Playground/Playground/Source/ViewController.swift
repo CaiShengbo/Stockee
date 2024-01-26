@@ -171,7 +171,11 @@ extension ViewController {
                 TimeShareChart(color: .red, indicatorShadowColor: .orange)
             } else {
                 // 绘制蜡烛图
-                CandlestickChart()
+                if arc4random()%2 == 0 {
+                    CandlestickChart()
+                } else {
+                    HollowCandlestickChart()
+                }
                 if chartOptions.contains(.ma) {
                     // 如果包含 ma，则绘制 MA
                     // MA5
