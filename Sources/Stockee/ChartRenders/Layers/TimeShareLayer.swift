@@ -50,6 +50,25 @@ final class TimeShareLayer: CALayer {
         super.init()
         configureHierarchy()
     }
+    
+    override public init(layer: Any) {
+        guard let layer = layer as? TimeShareLayer else {
+            fatalError("init(layer:) error: layer: \(layer)")
+        }
+        super.init()
+        configureHierarchy()
+        frame = layer.frame
+        gradientLayer.colors = layer.gradientLayer.colors
+        gradientLayer.frame = layer.gradientLayer.frame
+        lineLayer.strokeColor = layer.lineLayer.strokeColor
+        lineLayer.path = layer.lineLayer.path
+        maskLayer.path = layer.maskLayer.path
+        indicatorLayer.backgroundColor = layer.indicatorLayer.backgroundColor
+        indicatorShadowLayer.shadowColor = layer.indicatorShadowLayer.shadowColor
+        indicatorShadowLayer.isHidden = layer.indicatorShadowLayer.isHidden
+        indicatorShadowLayer.frame = layer.indicatorShadowLayer.frame
+    }
+
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)

@@ -78,6 +78,23 @@ public class InsetsTextLayer: ShapeLayer {
         contentsScale = UIScreen.main.scale
         allowsEdgeAntialiasing = true
         textLayer.allowsEdgeAntialiasing = true
+        frame = layer.frame
+        contentsScale = layer.contentsScale
+        font = layer.font
+        textLayer.font = layer.font
+        textLayer.fontSize = layer.font.pointSize
+        textColor = layer.textColor
+        textLayer.foregroundColor = layer.textColor.cgColor
+        text = layer.text
+        textLayer.string = layer.text
+        alignmentMode = layer.alignmentMode
+        textLayer.alignmentMode = layer.alignmentMode
+        backgroundColor = layer.backgroundColor
+        cornerRadius = layer.cornerRadius
+        borderWidth = layer.borderWidth
+        borderColor = layer.borderColor
+        textLayer.frame = layer.textLayer.frame
+        zPosition = layer.zPosition
     }
     
     required init?(coder: NSCoder) {

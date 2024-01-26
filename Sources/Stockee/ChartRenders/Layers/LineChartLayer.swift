@@ -32,6 +32,17 @@ public final class LineChartLayer: ShapeLayer {
         setup()
     }
 
+    public override init(layer: Any) {
+        guard let layer = layer as? LineChartLayer else {
+            fatalError("init(layer:) error: layer: \(layer)")
+        }
+        super.init()
+        setup()
+        path = layer.path
+        strokeColor = layer.strokeColor
+        lineWidth = layer.lineWidth
+    }
+
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setup()
