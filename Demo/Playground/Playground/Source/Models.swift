@@ -29,8 +29,9 @@ import Foundation
 public struct ChartOption: OptionSet {
     public typealias RawValue = UInt
     public var rawValue: UInt
-
+    // swiftlint:disable identifier_name
     public static var ma: ChartOption = .init(rawValue: 1 << 0)
+    // swiftlint:enable identifier_name
     public static var ema: ChartOption = .init(rawValue: 1 << 1)
     public static var boll: ChartOption = .init(rawValue: 1 << 2)
     public static var sar: ChartOption = .init(rawValue: 1 << 3)
